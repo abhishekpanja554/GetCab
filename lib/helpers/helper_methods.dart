@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:uber_clone/dataModels/address.dart';
@@ -11,6 +13,7 @@ import 'package:uber_clone/dataModels/user.dart';
 import 'package:uber_clone/dataProvider/app_data.dart';
 import 'package:uber_clone/helpers/network_helper.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 import '../globalVariables.dart';
 
@@ -39,6 +42,34 @@ class HelperMethods {
           .updatePickupAddress(pickupAddress);
     }
     return placeAddress;
+  }
+
+  static void sendPushNotificationToDriver(
+      String token, BuildContext context, String rideId) async {
+    var destination = Provider.of<AppData>(context, listen: false).destAddress;
+    var response = await http.post(
+      'https://fcm.googleapis.com/fcm/send',
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'key=$serverKey',
+      },
+      body: jsonEncode(
+        <String, dynamic>{
+          'notification': <String, dynamic>{
+            'body': 'Destination, ${destination.placeName}',
+            'title': 'NEW TRIP REQUEST'
+          },
+          'priority': 'high',
+          'data': <String, dynamic>{
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            'id': '1',
+            'status': 'done',
+            'ride_id': rideId
+          },
+          'to': token,
+        },
+      ),
+    );
   }
 
   static Future<DirectionDetails> getDirectionDetails(

@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:uber_clone/dataProvider/app_data.dart';
+import 'package:uber_clone/globalVariables.dart';
 import 'package:uber_clone/screens/login_page.dart';
 import 'package:uber_clone/screens/main_page.dart';
 import 'package:uber_clone/screens/registration_page.dart';
@@ -28,6 +30,7 @@ Future<void> main() async {
             databaseURL: 'https://geetaxi-5e2be.firebaseio.com',
           ),
   );
+  currentLoggedUser = FirebaseAuth.instance.currentUser;
   runApp(MyApp());
 }
 
@@ -43,7 +46,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        initialRoute: MainPage.id,
+        initialRoute: (currentLoggedUser == null) ? LoginPage.id : MainPage.id,
         routes: {
           LoginPage.id: (context) => LoginPage(),
           RegistrationPage.id: (context) => RegistrationPage(),
