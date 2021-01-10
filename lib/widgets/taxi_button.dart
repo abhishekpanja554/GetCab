@@ -12,12 +12,12 @@ class TaxiButton extends StatelessWidget {
     return RaisedButton(
       onPressed: onPressed,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(15),
       ),
       color: color,
       textColor: Colors.white,
       child: Container(
-        height: 50,
+        height: 60,
         child: Center(
           child: Text(
             buttonText,

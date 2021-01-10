@@ -1,6 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -79,6 +80,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   bool isRequestingLocDetails = false;
 
   Position carPosition;
+
+  String _darkMapStyle;
 
   void setupPositionLocator() async {
     Position position = await Geolocator.getCurrentPosition(
@@ -299,6 +302,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         }
       });
     });
+  }
+
+  void changeMapStyle() {
+    getMapStyle().then((mapStyle) => mapController.setMapStyle(mapStyle));
+  }
+
+  Future<String> getMapStyle() async {
+    return await rootBundle.loadString('lib/map_styles/mapStyle.json');
   }
 
   void cancelRequest() async {
@@ -638,6 +649,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               });
               // getCurrentLocation();
               setupPositionLocator();
+              changeMapStyle();
             },
           ),
           //menu button
@@ -666,11 +678,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   ],
                 ),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white,
+                  backgroundColor: BrandColors.colorDarkBlue,
                   radius: 20,
                   child: Icon(
                     (drawerCanOpen) ? Icons.menu : Icons.arrow_back,
-                    color: Colors.black87,
+                    color: BrandColors.colorTextLight,
                   ),
                 ),
               ),
@@ -691,7 +703,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               child: Container(
                 height: searchSheetHeight,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: BrandColors.colorDarkBlue,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -720,6 +732,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         'Nice to see you!',
                         style: TextStyle(
                           fontSize: 10,
+                          color: Colors.white,
                         ),
                       ),
                       Text(
@@ -727,6 +740,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         style: TextStyle(
                           fontSize: 18,
                           fontFamily: 'Brand-Bold',
+                          color: Color(0xFF40C1C9),
                         ),
                       ),
                       SizedBox(
@@ -747,7 +761,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: BrandColors.colorlightPurple,
                             borderRadius: BorderRadius.circular(4),
                             boxShadow: [
                               BoxShadow(
@@ -767,13 +781,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                               children: [
                                 Icon(
                                   Icons.search,
-                                  color: Colors.blueAccent,
+                                  color: Color(0xFF40C1C9),
                                 ),
                                 SizedBox(
                                   width: 20,
                                 ),
                                 Text(
                                   'Search Destination',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ],
                             ),
@@ -787,7 +804,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         children: [
                           Icon(
                             Icons.home_outlined,
-                            color: BrandColors.colorDimText,
+                            color: Color(0xFF40C1C9),
                           ),
                           SizedBox(
                             width: 12,
@@ -795,7 +812,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Add Home'),
+                              Text(
+                                'Add Home',
+                                style: TextStyle(
+                                  color: Color(0xFF40C1C9),
+                                ),
+                              ),
                               SizedBox(
                                 height: 3,
                               ),
@@ -821,7 +843,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         children: [
                           Icon(
                             Icons.work_outline,
-                            color: BrandColors.colorDimText,
+                            color: Color(0xFF40C1C9),
                           ),
                           SizedBox(
                             width: 12,
@@ -829,7 +851,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Add Work'),
+                              Text(
+                                'Add Work',
+                                style: TextStyle(
+                                  color: Color(0xFF40C1C9),
+                                ),
+                              ),
                               SizedBox(
                                 height: 3,
                               ),
@@ -864,7 +891,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               child: Container(
                 height: rideDetailsHeight,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: BrandColors.colorDarkBlue,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(15),
                     topRight: Radius.circular(15),
@@ -881,22 +908,35 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 child: Padding(
                   padding: EdgeInsets.symmetric(
                     vertical: 18,
+                    horizontal: 18,
                   ),
                   child: Column(
                     children: [
                       Container(
+                        decoration: BoxDecoration(
+                          color: BrandColors.colorVeryLightPurple,
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                        ),
                         width: double.infinity,
-                        color: BrandColors.colorAccent1,
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: 16,
                           ),
                           child: Row(
                             children: [
-                              Image.asset(
-                                'images/taxi.png',
-                                height: 70,
-                                width: 70,
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: CircleAvatar(
+                                  child: Image.asset(
+                                    'images/taxi.png',
+                                    height: 70,
+                                    width: 70,
+                                  ),
+                                  radius: 35,
+                                  backgroundColor: Color(0xFF83CBF1),
+                                ),
                               ),
                               SizedBox(
                                 width: 16,
@@ -907,9 +947,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                   Text(
                                     'Taxi',
                                     style: TextStyle(
-                                      fontSize: 18,
-                                      fontFamily: 'Brand-Bold',
-                                    ),
+                                        fontSize: 18,
+                                        fontFamily: 'Brand-Bold',
+                                        color: Colors.white),
                                   ),
                                   Text(
                                     (tripDirectionDetails != null)
@@ -932,6 +972,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 style: TextStyle(
                                   fontFamily: 'Brand-Bold',
                                   fontSize: 18,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
@@ -955,7 +996,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                             SizedBox(
                               width: 16,
                             ),
-                            Text('Cash'),
+                            Text(
+                              'Cash',
+                              style: TextStyle(color: Colors.white),
+                            ),
                             SizedBox(
                               width: 5,
                             ),
@@ -976,7 +1020,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         ),
                         child: TaxiButton(
                           buttonText: 'REQUEST CAB',
-                          color: BrandColors.colorGreen,
+                          color: BrandColors.colorlightPurple,
                           onPressed: () {
                             setState(() {
                               appStateVariable = 'REQUESTING';
@@ -1007,7 +1051,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               child: Container(
                 height: requestSheetHeight,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: BrandColors.colorDarkBlue,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(15),
                     topRight: Radius.circular(15),
@@ -1041,7 +1085,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: BrandColors.colorTextSemiLight,
+                          color: Color(0xFF40C1C9),
                         ),
                       ),
                       SizedBox(
@@ -1056,27 +1100,29 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           height: 50,
                           width: 50,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: BrandColors.colorlightPurple,
                             borderRadius: BorderRadius.circular(25),
                             border: Border.all(
                               width: 1,
-                              color: BrandColors.colorLightGrayFair,
+                              color: Color(0xFF40C1C9),
                             ),
                           ),
                           child: Icon(
                             Icons.close,
                             size: 25,
+                            color: Colors.white,
                           ),
                         ),
+                      ),
+                      SizedBox(
+                        height: 10,
                       ),
                       Container(
                         width: double.infinity,
                         child: Text(
                           'Cancel Ride',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(fontSize: 12, color: Colors.white),
                         ),
                       ),
                     ],
@@ -1099,7 +1145,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               child: Container(
                 height: tripInfoSheetHeight,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: BrandColors.colorDarkBlue,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(15),
                     topRight: Radius.circular(15),
@@ -1133,6 +1179,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                             style: TextStyle(
                               fontSize: 18,
                               fontFamily: 'Brand-Bold',
+                              color: Color(0xFF40C1C9),
                             ),
                           ),
                         ],
@@ -1140,24 +1187,35 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(
                         height: 20,
                       ),
-                      BrandDivider(),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Text(
-                        '$carColor - $carModel',
-                        style: TextStyle(color: BrandColors.colorTextLight),
-                      ),
-                      Text(
-                        driverName,
-                        style: TextStyle(
-                          fontSize: 20,
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: BrandColors.colorVeryLightPurple,
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              '$carColor - $carModel',
+                              style:
+                                  TextStyle(color: BrandColors.colorTextLight),
+                            ),
+                            Text(
+                              driverName,
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Color(0xFF40C1C9),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      BrandDivider(),
                       SizedBox(
                         height: 20,
                       ),
@@ -1179,12 +1237,18 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 ),
                                 child: Icon(
                                   Icons.call,
+                                  color: Colors.white,
                                 ),
                               ),
                               SizedBox(
                                 height: 10,
                               ),
-                              Text('Call'),
+                              Text(
+                                'Call',
+                                style: TextStyle(
+                                  color: Color(0xFF40C1C9),
+                                ),
+                              ),
                             ],
                           ),
                           Column(
@@ -1202,35 +1266,50 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 ),
                                 child: Icon(
                                   Icons.list,
+                                  color: Colors.white,
                                 ),
                               ),
                               SizedBox(
                                 height: 10,
                               ),
-                              Text('Details'),
+                              Text(
+                                'Details',
+                                style: TextStyle(
+                                  color: Color(0xFF40C1C9),
+                                ),
+                              ),
                             ],
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Container(
-                                height: 50,
-                                width: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  border: Border.all(
-                                    width: 1,
-                                    color: BrandColors.colorTextLight,
+                              GestureDetector(
+                                onTap: cancelRequest,
+                                child: Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(25),
+                                    border: Border.all(
+                                      width: 1,
+                                      color: BrandColors.colorTextLight,
+                                    ),
                                   ),
-                                ),
-                                child: Icon(
-                                  Icons.cancel_outlined,
+                                  child: Icon(
+                                    Icons.cancel_rounded,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                               SizedBox(
                                 height: 10,
                               ),
-                              Text('Cancel'),
+                              Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Color(0xFF40C1C9),
+                                ),
+                              ),
                             ],
                           ),
                         ],

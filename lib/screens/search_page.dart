@@ -61,12 +61,13 @@ class _SearchPageState extends State<SearchPage> {
 
     pickupController.text = address;
     return Scaffold(
+      backgroundColor: Color(0xFF222B60),
       body: Column(
         children: [
           Container(
             height: 250,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: BrandColors.colorDarkBlue,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black12,
@@ -97,7 +98,10 @@ class _SearchPageState extends State<SearchPage> {
                         onTap: () {
                           Navigator.pop(context);
                         },
-                        child: Icon(Icons.arrow_back),
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                        ),
                       ),
                       Center(
                         child: Text(
@@ -105,6 +109,7 @@ class _SearchPageState extends State<SearchPage> {
                           style: TextStyle(
                             fontSize: 20,
                             fontFamily: 'Brand-Bold',
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -127,15 +132,21 @@ class _SearchPageState extends State<SearchPage> {
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: BrandColors.colorLightGrayFair,
+                            color: BrandColors.colorlightPurple,
                           ),
                           child: Padding(
                             padding: EdgeInsets.all(2.0),
                             child: TextField(
+                              style: TextStyle(
+                                color: Color(0xFF40C1C9),
+                              ),
                               controller: pickupController,
                               decoration: InputDecoration(
                                 hintText: 'Pickup Location',
-                                fillColor: BrandColors.colorLightGrayFair,
+                                hintStyle: TextStyle(
+                                  color: Color(0xFF40C1C9),
+                                ),
+                                fillColor: BrandColors.colorlightPurple,
                                 filled: true,
                                 border: InputBorder.none,
                                 isDense: true,
@@ -168,17 +179,23 @@ class _SearchPageState extends State<SearchPage> {
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: BrandColors.colorLightGrayFair,
+                            color: BrandColors.colorlightPurple,
                           ),
                           child: Padding(
                             padding: EdgeInsets.all(2.0),
                             child: TextField(
+                              style: TextStyle(
+                                color: Color(0xFF40C1C9),
+                              ),
                               focusNode: focusDestination,
                               controller: destinationController,
                               onChanged: (value) => searchPlace(value),
                               decoration: InputDecoration(
                                 hintText: 'Where to?',
-                                fillColor: BrandColors.colorLightGrayFair,
+                                hintStyle: TextStyle(
+                                  color: Color(0xFF40C1C9),
+                                ),
+                                fillColor: BrandColors.colorlightPurple,
                                 filled: true,
                                 border: InputBorder.none,
                                 isDense: true,

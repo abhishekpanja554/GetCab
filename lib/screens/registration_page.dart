@@ -234,7 +234,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                           registerUser();
                         },
-                        color: BrandColors.colorGreen,
+                        color: BrandColors.colorlightPurple,
                       ),
                     ],
                   ),

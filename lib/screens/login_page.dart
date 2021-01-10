@@ -183,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
 
                           login();
                         },
-                        color: BrandColors.colorGreen,
+                        color: BrandColors.colorlightPurple,
                       ),
                     ],
                   ),

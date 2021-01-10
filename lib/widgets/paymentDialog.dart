@@ -54,7 +54,7 @@ class PaymentDialog extends StatelessWidget {
               width: 230,
               child: TaxiButton(
                 buttonText: (paymentMethod == 'cash') ? 'PAY CASH' : 'CONFIRM',
-                color: BrandColors.colorGreen,
+                color: BrandColors.colorlightPurple,
                 onPressed: () {
                   Navigator.pop(context, 'close');
                 },

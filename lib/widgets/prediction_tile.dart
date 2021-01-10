@@ -62,7 +62,7 @@ class PredictionTile extends StatelessWidget {
               children: [
                 Icon(
                   Icons.location_on_outlined,
-                  color: BrandColors.colorLightGray,
+                  color: Color(0xFF8971B2),
                 ),
                 SizedBox(
                   width: 12,
@@ -75,6 +75,7 @@ class PredictionTile extends StatelessWidget {
                         prediction.mainText,
                         style: TextStyle(
                           fontSize: 12,
+                          color: Color(0xFF40C1C9),
                         ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
