@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:uber_clone/brand_colors.dart';
 
 class TaxiOutlineButton extends StatelessWidget {
-
   final String title;
   final Function onPressed;
   final Color color;
@@ -22,12 +20,15 @@ class TaxiOutlineButton extends StatelessWidget {
         child: Container(
           height: 50.0,
           child: Center(
-            child: Text(title,
-                style: TextStyle(fontSize: 15.0, fontFamily: 'Brand-Bold', color: BrandColors.colorText)),
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15.0,
+                fontFamily: 'Brand-Bold',
+                color: Color(0xFF40C1C9),
+              ),
+            ),
           ),
-        )
-    );
+        ));
   }
 }
-
-

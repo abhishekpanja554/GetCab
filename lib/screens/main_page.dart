@@ -19,12 +19,14 @@ import 'package:uber_clone/helpers/map_toolkit_helper.dart';
 import 'package:uber_clone/rideVariables.dart';
 import 'package:uber_clone/screens/search_page.dart';
 import 'package:uber_clone/styles/styles.dart';
+import 'package:uber_clone/widgets/drawer_listTile.dart';
 import 'package:uber_clone/widgets/noDriverDialog.dart';
 import 'package:uber_clone/widgets/brand_divider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uber_clone/widgets/paymentDialog.dart';
 import 'package:uber_clone/widgets/progress_dialog.dart';
 import 'package:uber_clone/widgets/taxi_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MainPage extends StatefulWidget {
   static String id = 'main_page';
@@ -82,6 +84,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   Position carPosition;
 
   String _darkMapStyle;
+
+  var paymentType = 'Cash';
 
   void setupPositionLocator() async {
     Position position = await Geolocator.getCurrentPosition(
@@ -348,7 +352,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'destination_address': destination.placeName,
       'pickup': pickupMap,
       'destination': destinationMap,
-      'payment_method': 'cash',
+      'payment_method': paymentType,
       'driver_id': 'waiting',
     };
 
@@ -432,6 +436,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             rideSubscription.cancel();
             rideSubscription = null;
             resetApp();
+            setState(() {
+              tripInfoSheetHeight = 0;
+            });
           }
         }
       }
@@ -532,97 +539,82 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       key: scaffoldKey,
       drawer: Container(
+        color: Color(0xFF3B4254),
         width: 250,
-        color: Colors.white,
         child: Drawer(
-          child: ListView(
-            padding: EdgeInsets.all(0),
-            children: [
-              Container(
-                color: Colors.white,
-                height: 160,
-                child: DrawerHeader(
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'images/user_icon.png',
-                        height: 60,
-                        width: 60,
-                      ),
-                      SizedBox(
-                        width: 15,
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Abhishek',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontFamily: 'Brand-Bold',
+          child: Container(
+            color: Color(0xFF3B4254),
+            child: ListView(
+              padding: EdgeInsets.all(0),
+              children: [
+                Container(
+                  height: 160,
+                  child: DrawerHeader(
+                    child: Row(
+                      children: [
+                        Image.asset(
+                          'images/user_icon.png',
+                          height: 60,
+                          width: 60,
+                        ),
+                        SizedBox(
+                          width: 15,
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              (currentUserInfo == null)?'':currentUserInfo.fullName.split(" ")[0],
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontFamily: 'Brand-Bold',
+                                  color: Colors.white),
                             ),
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Text('View Profile'),
-                        ],
-                      ),
-                    ],
+                            SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              'View Profile',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF1F2240),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                  ),
                 ),
-              ),
-              BrandDivider(),
-              SizedBox(
-                height: 10,
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.card_giftcard,
+                DrawerListTile(
+                  title: 'Free Rides',
+                  icon: Icons.card_giftcard,
+                  onTap: null,
                 ),
-                title: Text(
-                  'Free Rides',
-                  style: kDrawerItemStyle,
+                DrawerListTile(
+                  title: 'Payments',
+                  icon: Icons.credit_card,
+                  onTap: null,
                 ),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.credit_card,
+                DrawerListTile(
+                  title: 'Ride History',
+                  icon: Icons.history,
+                  onTap: null,
                 ),
-                title: Text(
-                  'Payments',
-                  style: kDrawerItemStyle,
+                DrawerListTile(
+                  title: 'Support',
+                  icon: Icons.contact_support,
+                  onTap: null,
                 ),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.history,
+                DrawerListTile(
+                  title: 'About',
+                  icon: Icons.question_answer,
+                  onTap: null,
                 ),
-                title: Text(
-                  'Ride History',
-                  style: kDrawerItemStyle,
-                ),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.contact_support_outlined,
-                ),
-                title: Text(
-                  'Support',
-                  style: kDrawerItemStyle,
-                ),
-              ),
-              ListTile(
-                leading: Icon(Icons.info_outline),
-                title: Text(
-                  'Free Rides',
-                  style: kDrawerItemStyle,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -678,7 +670,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   ],
                 ),
                 child: CircleAvatar(
-                  backgroundColor: BrandColors.colorDarkBlue,
+                  backgroundColor: BrandColors.colorlightPurple,
                   radius: 20,
                   child: Icon(
                     (drawerCanOpen) ? Icons.menu : Icons.arrow_back,
@@ -728,19 +720,27 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(
                         height: 5,
                       ),
-                      Text(
-                        'Nice to see you!',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        'Where are you going?',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontFamily: 'Brand-Bold',
-                          color: Color(0xFF40C1C9),
+                      Container(
+                        width: double.infinity,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Nice to see you!',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'Where are you going?',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontFamily: 'Brand-Bold',
+                                color: Color(0xFF40C1C9),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       SizedBox(
@@ -762,7 +762,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         child: Container(
                           decoration: BoxDecoration(
                             color: BrandColors.colorlightPurple,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(25),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black12,
@@ -776,7 +776,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                             ],
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.all(12.0),
+                            padding: EdgeInsets.all(12.0),
                             child: Row(
                               children: [
                                 Icon(
@@ -800,37 +800,45 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(
                         height: 22,
                       ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.home_outlined,
-                            color: Color(0xFF40C1C9),
-                          ),
-                          SizedBox(
-                            width: 12,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Add Home',
-                                style: TextStyle(
-                                  color: Color(0xFF40C1C9),
+                      Container(
+                        padding: EdgeInsets.all(5),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: BrandColors.colorVeryLightPurple,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.home_outlined,
+                              color: Color(0xFF40C1C9),
+                            ),
+                            SizedBox(
+                              width: 12,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Add Home',
+                                  style: TextStyle(
+                                    color: Color(0xFF40C1C9),
+                                  ),
                                 ),
-                              ),
-                              SizedBox(
-                                height: 3,
-                              ),
-                              Text(
-                                'Your residential address',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: BrandColors.colorDimText,
+                                SizedBox(
+                                  height: 3,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                                Text(
+                                  'Your residential address',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: BrandColors.colorDimText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       SizedBox(
                         height: 10,
@@ -839,37 +847,45 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(
                         height: 10,
                       ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.work_outline,
-                            color: Color(0xFF40C1C9),
-                          ),
-                          SizedBox(
-                            width: 12,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Add Work',
-                                style: TextStyle(
-                                  color: Color(0xFF40C1C9),
+                      Container(
+                        padding: EdgeInsets.all(5),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: BrandColors.colorVeryLightPurple,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.work_outline,
+                              color: Color(0xFF40C1C9),
+                            ),
+                            SizedBox(
+                              width: 12,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Add Work',
+                                  style: TextStyle(
+                                    color: Color(0xFF40C1C9),
+                                  ),
                                 ),
-                              ),
-                              SizedBox(
-                                height: 3,
-                              ),
-                              Text(
-                                'Your office address',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: BrandColors.colorDimText,
+                                SizedBox(
+                                  height: 3,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                                Text(
+                                  'Your office address',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: BrandColors.colorDimText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -980,7 +996,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         ),
                       ),
                       SizedBox(
-                        height: 22,
+                        height: 10,
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(
@@ -994,25 +1010,39 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                               color: BrandColors.colorTextLight,
                             ),
                             SizedBox(
-                              width: 16,
+                              width: 20,
                             ),
-                            Text(
-                              'Cash',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            SizedBox(
-                              width: 5,
-                            ),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 16,
-                              color: BrandColors.colorTextLight,
+                            DropdownButton<String>(
+                              dropdownColor: BrandColors.colorlightPurple,
+                              value: paymentType,
+                              icon: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white,
+                              ),
+                              iconSize: 16,
+                              elevation: 16,
+                              style:
+                                  TextStyle(color: BrandColors.colorTextLight),
+                              items: <String>[
+                                'Cash',
+                                'UPI',
+                              ].map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (String payType) {
+                                setState(() {
+                                  paymentType = payType;
+                                });
+                              },
                             ),
                           ],
                         ),
                       ),
                       SizedBox(
-                        height: 22,
+                        height: 10,
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(
@@ -1235,9 +1265,18 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                     color: BrandColors.colorTextLight,
                                   ),
                                 ),
-                                child: Icon(
-                                  Icons.call,
-                                  color: Colors.white,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    if (await canLaunch('tel:$driverPhone')) {
+                                      await launch('tel:$driverPhone');
+                                    } else {
+                                      throw 'Could not launch';
+                                    }
+                                  },
+                                  child: Icon(
+                                    Icons.call,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                               SizedBox(

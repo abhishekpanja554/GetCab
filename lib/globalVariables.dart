@@ -14,4 +14,4 @@ auth.User currentLoggedUser;
 Position currentPosition;
 User currentUserInfo;
 String serverKey =
-    '	AAAAsmFFLb8:APA91bEbVxH06hiUmFnaghFujacPquJrEovHYZulbeUoc0O5Sk3aM1tXUzH29Zf4inVkXbdjU-DxIeenULRvVgfYxuxA4USZiDmqyGsh3rZSdXsmr_imIjLwgWoToSt7MoPDcO9C4jEl';
+    'AAAAsmFFLb8:APA91bEbVxH06hiUmFnaghFujacPquJrEovHYZulbeUoc0O5Sk3aM1tXUzH29Zf4inVkXbdjU-DxIeenULRvVgfYxuxA4USZiDmqyGsh3rZSdXsmr_imIjLwgWoToSt7MoPDcO9C4jEl';

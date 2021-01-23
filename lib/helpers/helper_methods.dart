@@ -47,7 +47,7 @@ class HelperMethods {
   static void sendPushNotificationToDriver(
       String token, BuildContext context, String rideId) async {
     var destination = Provider.of<AppData>(context, listen: false).destAddress;
-    var response = await http.post(
+    await http.post(
       'https://fcm.googleapis.com/fcm/send',
       headers: <String, String>{
         'Content-Type': 'application/json',
