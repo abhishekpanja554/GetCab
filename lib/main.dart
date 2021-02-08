@@ -6,8 +6,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:uber_clone/dataProvider/app_data.dart';
 import 'package:uber_clone/globalVariables.dart';
+import 'package:uber_clone/screens/history_page.dart';
 import 'package:uber_clone/screens/login_page.dart';
 import 'package:uber_clone/screens/main_page.dart';
+import 'package:uber_clone/screens/profile_edit_page.dart';
+import 'package:uber_clone/screens/profile_page.dart';
 import 'package:uber_clone/screens/registration_page.dart';
 
 Future<void> main() async {
@@ -50,7 +53,9 @@ class MyApp extends StatelessWidget {
         routes: {
           LoginPage.id: (context) => LoginPage(),
           RegistrationPage.id: (context) => RegistrationPage(),
-          MainPage.id: (context) => MainPage()
+          MainPage.id: (context) => MainPage(),
+          ProfilePage.id: (context) => ProfilePage(),
+          HistoryPage.id: (context) => HistoryPage(),
         },
       ),
     );

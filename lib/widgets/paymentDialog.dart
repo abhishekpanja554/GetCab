@@ -3,11 +3,18 @@ import 'package:uber_clone/brand_colors.dart';
 import 'package:uber_clone/widgets/brand_divider.dart';
 import 'package:uber_clone/widgets/taxi_button.dart';
 
-class PaymentDialog extends StatelessWidget {
+class PaymentDialog extends StatefulWidget {
   final String paymentMethod;
   final int fares;
 
   PaymentDialog({this.paymentMethod, this.fares});
+
+  @override
+  _PaymentDialogState createState() => _PaymentDialogState();
+}
+
+class _PaymentDialogState extends State<PaymentDialog> {
+  double _currentSliderValue = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +32,7 @@ class PaymentDialog extends StatelessWidget {
             SizedBox(
               height: 20,
             ),
-            Text('${paymentMethod.toUpperCase()} PAYMENT'),
+            Text('${widget.paymentMethod.toUpperCase()} PAYMENT'),
             SizedBox(
               height: 20,
             ),
@@ -34,7 +41,7 @@ class PaymentDialog extends StatelessWidget {
               height: 16.0,
             ),
             Text(
-              '\$$fares',
+              '₹${widget.fares}',
               style: TextStyle(fontFamily: 'Brand-Bold', fontSize: 50),
             ),
             SizedBox(
@@ -48,15 +55,41 @@ class PaymentDialog extends StatelessWidget {
               ),
             ),
             SizedBox(
+              height: 16,
+            ),
+            Text(
+              'Rate your ride',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontFamily: 'Brand-Bold',
+              ),
+            ),
+            Slider(
+              activeColor: BrandColors.colorGreen,
+              value: _currentSliderValue,
+              min: 0,
+              max: 5,
+              divisions: 5,
+              label: _currentSliderValue.round().toString(),
+              onChanged: (double value) {
+                setState(() {
+                  _currentSliderValue = value;
+                });
+              },
+            ),
+            SizedBox(
               height: 30,
             ),
             Container(
               width: 230,
               child: TaxiButton(
-                buttonText: (paymentMethod == 'cash') ? 'PAY CASH' : 'CONFIRM',
+                buttonText:
+                    (widget.paymentMethod == 'cash') ? 'PAY CASH' : 'CONFIRM',
                 color: BrandColors.colorlightPurple,
                 onPressed: () {
-                  Navigator.pop(context, 'close');
+                  Navigator.pop(context, _currentSliderValue.round());
                 },
               ),
             ),

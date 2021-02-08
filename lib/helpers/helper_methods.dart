@@ -7,8 +7,10 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:uber_clone/dataModels/address.dart';
 import 'package:uber_clone/dataModels/direction_details.dart';
+import 'package:uber_clone/dataModels/history.dart';
 import 'package:uber_clone/dataModels/user.dart';
 import 'package:uber_clone/dataProvider/app_data.dart';
 import 'package:uber_clone/helpers/network_helper.dart';
@@ -111,7 +113,7 @@ class HelperMethods {
     return totalFare.truncate();
   }
 
-  static void getCurrentUserInfo() async {
+  static void getCurrentUserInfo(context) async {
     String uid;
     currentLoggedUser = auth.FirebaseAuth.instance.currentUser;
     if (currentLoggedUser != null) {
@@ -123,13 +125,66 @@ class HelperMethods {
     dbRef.once().then((DataSnapshot snapshot) {
       if (snapshot.value != null) {
         currentUserInfo = User.fromSnapshot(snapshot);
+        Provider.of<AppData>(context, listen: false)
+            .updateCurrentUser(currentUserInfo);
       }
     });
+  }
+
+  static void getHistory(context) {
+    DatabaseReference historyRef = FirebaseDatabase.instance
+        .reference()
+        .child('users/${currentLoggedUser.uid}/ride_history');
+    historyRef.once().then((DataSnapshot snapshot) {
+      if (snapshot.value != null) {
+        Map<dynamic, dynamic> values = snapshot.value;
+        int tripCount = values.length;
+
+        // update trip count to data provider
+        Provider.of<AppData>(context, listen: false).updateTripCount(tripCount);
+
+        List<String> tripHistoryKeys = [];
+        values.forEach((key, value) {
+          tripHistoryKeys.add(key);
+        });
+
+        // update trip keys to data provider
+        Provider.of<AppData>(context, listen: false)
+            .updateTripKeys(tripHistoryKeys);
+
+        getHistoryData(context);
+      }
+    });
+  }
+
+  static void getHistoryData(context) {
+    List<String> keys = Provider.of<AppData>(context, listen: false).tripHistoryKeys;
+    Provider.of<AppData>(context, listen: false).updateTripHistory(null);
+
+    for (String key in keys) {
+      DatabaseReference historyRef =
+          FirebaseDatabase.instance.reference().child('rideRequest/$key');
+
+      historyRef.once().then((DataSnapshot snapshot) {
+        if (snapshot.value != null) {
+          History history = History.fromSnapshot(snapshot);
+          Provider.of<AppData>(context, listen: false)
+              .updateTripHistory(history);
+        }
+      });
+    }
   }
 
   static double randomNumberGenerator(int max) {
     var randonGen = Random();
     int rand = randonGen.nextInt(max);
     return rand.toDouble();
+  }
+
+  static String dateFormatter(String dateStr) {
+    DateTime dateTime = DateTime.parse(dateStr);
+    String formattedDateStr =
+        '${DateFormat.MMMMd().format(dateTime)}, ${DateFormat.y().format(dateTime)} - ${DateFormat.jm().format(dateTime)}';
+    return formattedDateStr;
   }
 }

@@ -17,8 +17,9 @@ import 'package:uber_clone/helpers/fire_helper.dart';
 import 'package:uber_clone/helpers/helper_methods.dart';
 import 'package:uber_clone/helpers/map_toolkit_helper.dart';
 import 'package:uber_clone/rideVariables.dart';
+import 'package:uber_clone/screens/history_page.dart';
+import 'package:uber_clone/screens/profile_page.dart';
 import 'package:uber_clone/screens/search_page.dart';
-import 'package:uber_clone/styles/styles.dart';
 import 'package:uber_clone/widgets/drawer_listTile.dart';
 import 'package:uber_clone/widgets/noDriverDialog.dart';
 import 'package:uber_clone/widgets/brand_divider.dart';
@@ -65,6 +66,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   BitmapDescriptor nearByIcon;
 
+  BitmapDescriptor travelLocationIcon;
+
   DirectionDetails tripDirectionDetails;
 
   DatabaseReference rideRef;
@@ -82,8 +85,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   bool isRequestingLocDetails = false;
 
   Position carPosition;
-
-  String _darkMapStyle;
 
   var paymentType = 'Cash';
 
@@ -124,6 +125,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               imageConfiguration, 'images/car_android.png')
           .then((icon) {
         nearByIcon = icon;
+      });
+    }
+
+    if (travelLocationIcon == null) {
+      ImageConfiguration imageConfiguration = createLocalImageConfiguration(
+        context,
+        size: Size(2, 2),
+      );
+
+      BitmapDescriptor.fromAssetImage(
+              imageConfiguration, 'images/custom-marker.png')
+          .then((icon) {
+        travelLocationIcon = icon;
       });
     }
   }
@@ -217,6 +231,159 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       mapBottomPadding = 260;
       drawerCanOpen = false;
     });
+  }
+
+  Future<void> getDirection() async {
+    var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
+    var destination = Provider.of<AppData>(context, listen: false).destAddress;
+
+    var pickLatLng = LatLng(pickup.latitude, pickup.longitude);
+    var destLatLng = LatLng(destination.latitude, destination.longitude);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => ProgressDialog(
+        status: 'Please wait...',
+      ),
+    );
+
+    var thisDetails =
+        await HelperMethods.getDirectionDetails(pickLatLng, destLatLng);
+    setState(() {
+      tripDirectionDetails = thisDetails;
+    });
+
+    Navigator.pop(context);
+
+    PolylinePoints polylinePoints = PolylinePoints();
+    List<PointLatLng> results =
+        polylinePoints.decodePolyline(thisDetails.encodedPoints);
+
+    polyLineCoordinates.clear();
+
+    if (results.isNotEmpty) {
+      // loop through all pointLatLng points and convert them
+      // to a list of LatLng, required by the Polyline
+
+      results.forEach((PointLatLng points) {
+        polyLineCoordinates.add(LatLng(points.latitude, points.longitude));
+      });
+
+      _polylines.clear();
+
+      setState(() {
+        Polyline polyline = Polyline(
+          polylineId: PolylineId('polyId'),
+          color: Color(0xFF5198E4),
+          points: polyLineCoordinates,
+          jointType: JointType.round,
+          width: 4,
+          startCap: Cap.roundCap,
+          endCap: Cap.roundCap,
+          geodesic: true,
+        );
+
+        _polylines.add(polyline);
+      });
+
+      LatLngBounds bounds;
+
+      if (pickLatLng.latitude > destLatLng.latitude &&
+          pickLatLng.longitude > destLatLng.longitude) {
+        bounds = LatLngBounds(
+          southwest: destLatLng,
+          northeast: pickLatLng,
+        );
+      } else if (pickLatLng.longitude > destLatLng.longitude) {
+        bounds = LatLngBounds(
+          southwest: LatLng(pickLatLng.latitude, destLatLng.longitude),
+          northeast: LatLng(destLatLng.latitude, pickLatLng.longitude),
+        );
+      } else if (pickLatLng.latitude > destLatLng.latitude) {
+        bounds = LatLngBounds(
+          southwest: LatLng(destLatLng.latitude, pickLatLng.longitude),
+          northeast: LatLng(pickLatLng.latitude, destLatLng.longitude),
+        );
+      } else {
+        bounds = LatLngBounds(
+          southwest: pickLatLng,
+          northeast: destLatLng,
+        );
+      }
+
+      mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 70));
+
+      Marker pickupMarker = Marker(
+        markerId: MarkerId('pickUp'),
+        position: pickLatLng,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        infoWindow: InfoWindow(
+          title: pickup.placeName,
+          snippet: 'My Location',
+        ),
+      );
+
+      Marker destinationMarker = Marker(
+        markerId: MarkerId('destination'),
+        position: destLatLng,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: InfoWindow(
+          title: destination.placeName,
+          snippet: 'Destination Location',
+        ),
+      );
+
+      setState(() {
+        _markers.add(pickupMarker);
+        _markers.add(destinationMarker);
+      });
+
+      Circle pickupCircle = Circle(
+        circleId: CircleId('pickup'),
+        strokeColor: Colors.green,
+        strokeWidth: 3,
+        radius: 12,
+        center: pickLatLng,
+        fillColor: BrandColors.colorGreen,
+      );
+
+      Circle destinationCircle = Circle(
+        circleId: CircleId('destination'),
+        strokeColor: BrandColors.colorAccentPurple,
+        strokeWidth: 3,
+        radius: 12,
+        center: destLatLng,
+        fillColor: BrandColors.colorAccentPurple,
+      );
+
+      setState(() {
+        _circles.add(pickupCircle);
+        _circles.add(destinationCircle);
+      });
+    }
+  }
+
+  void resetApp() {
+    setState(() {
+      polyLineCoordinates.clear();
+      _polylines.clear();
+      _markers.clear();
+      _circles.clear();
+      rideDetailsHeight = 0;
+      requestSheetHeight = 0;
+      searchSheetHeight = 295;
+      mapBottomPadding = 295;
+      drawerCanOpen = true;
+      statusOfRide = '';
+      driverName = '';
+      driverPhone = '';
+      carModel = '';
+      carColor = '';
+      tripStatusDisplay = 'Driver is Arriving';
+    });
+
+    setupPositionLocator();
   }
 
   void getCurrentLocation() async {
@@ -326,11 +493,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    HelperMethods.getCurrentUserInfo();
+    HelperMethods.getCurrentUserInfo(context);
+    HelperMethods.getHistory(context);
   }
 
   void createRideRequest() {
     rideRef = FirebaseDatabase.instance.reference().child('rideRequest').push();
+    String rideId = rideRef.key;
+    print('Ride Key: ' + rideId);
     var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
     var destination = Provider.of<AppData>(context, listen: false).destAddress;
 
@@ -354,6 +524,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'destination': destinationMap,
       'payment_method': paymentType,
       'driver_id': 'waiting',
+      'rating': '0',
     };
 
     rideRef.set(rideMap);
@@ -387,6 +558,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         });
       }
 
+      if (event.snapshot.value['status'] != null) {
+        statusOfRide = event.snapshot.value['status'].toString();
+      }
+
       if (event.snapshot.value['driver_location'] != null) {
         double driverLat = double.parse(
             event.snapshot.value['driver_location']['latitude'].toString());
@@ -408,10 +583,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         }
       }
 
-      if (event.snapshot.value['status'] != null) {
-        statusOfRide = event.snapshot.value['status'].toString();
-      }
-
       if (statusOfRide == 'accepted') {
         showTripSheet();
         Geofire.stopListener();
@@ -420,6 +591,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
       if (statusOfRide == 'completed') {
         if (event.snapshot.value['fare'] != null) {
+          DatabaseReference userRideHistoryRef = FirebaseDatabase.instance
+              .reference()
+              .child('users/${currentLoggedUser.uid}/ride_history/$rideId');
+          userRideHistoryRef.set('true');
+
           int fares = int.parse(event.snapshot.value['fare'].toString());
           var response = await showDialog(
             context: context,
@@ -430,12 +606,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             ),
           );
 
-          if (response == 'close') {
+          if (response != null) {
+            rideRef.child('rating').set(response.toString());
             rideRef.onDisconnect();
             rideRef = null;
             rideSubscription.cancel();
             rideSubscription = null;
             resetApp();
+            HelperMethods.getHistory(context);
             setState(() {
               tripInfoSheetHeight = 0;
             });
@@ -447,14 +625,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   void getLocationUpdates(LatLng driverLoc) {
     LatLng oldPos = LatLng(0, 0);
-
-    // carPositionStream = Geolocator.getPositionStream(
-    //   desiredAccuracy: LocationAccuracy.bestForNavigation,
-    //   distanceFilter: 4,
-    //   timeInterval: 200,
-    // ).listen((Position position) {
-    //   currentPosition = position;
-    //   carPosition = position;
     LatLng pos = LatLng(driverLoc.latitude, driverLoc.longitude);
 
     double rotation = MapToolkitHelper.getMarkerRotation(
@@ -467,7 +637,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     Marker carMarker = Marker(
       markerId: MarkerId('moving'),
       position: pos,
-      icon: nearByIcon,
+      icon: travelLocationIcon,
       infoWindow: InfoWindow(title: 'Current Location'),
       rotation: rotation,
     );
@@ -475,7 +645,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     setState(() {
       CameraPosition cp = new CameraPosition(
         target: pos,
-        zoom: 17,
+        zoom: 15,
       );
       mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
       _markers.removeWhere((element) => element.markerId.value == 'moving');
@@ -552,10 +722,13 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   child: DrawerHeader(
                     child: Row(
                       children: [
-                        Image.asset(
-                          'images/user_icon.png',
-                          height: 60,
-                          width: 60,
+                        Hero(
+                          tag: 'profile_pic',
+                          child: Image.asset(
+                            'images/user_icon.png',
+                            height: 60,
+                            width: 60,
+                          ),
                         ),
                         SizedBox(
                           width: 15,
@@ -564,7 +737,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              (currentUserInfo == null)?'':currentUserInfo.fullName.split(" ")[0],
+                              (currentUserInfo == null)
+                                  ? ''
+                                  : currentUserInfo.fullName.split(" ")[0],
                               style: TextStyle(
                                   fontSize: 20,
                                   fontFamily: 'Brand-Bold',
@@ -573,10 +748,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                             SizedBox(
                               height: 5,
                             ),
-                            Text(
-                              'View Profile',
-                              style: TextStyle(
-                                color: Colors.white,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, ProfilePage.id);
+                              },
+                              child: Text(
+                                'View Profile',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -589,24 +769,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   ),
                 ),
                 DrawerListTile(
-                  title: 'Free Rides',
-                  icon: Icons.card_giftcard,
-                  onTap: null,
-                ),
-                DrawerListTile(
                   title: 'Payments',
                   icon: Icons.credit_card,
                   onTap: null,
                 ),
-                DrawerListTile(
-                  title: 'Ride History',
-                  icon: Icons.history,
-                  onTap: null,
-                ),
-                DrawerListTile(
-                  title: 'Support',
-                  icon: Icons.contact_support,
-                  onTap: null,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, HistoryPage.id);
+                  },
+                  child: DrawerListTile(
+                    title: 'Ride History',
+                    icon: Icons.history,
+                    onTap: null,
+                  ),
                 ),
                 DrawerListTile(
                   title: 'About',
@@ -693,13 +868,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               ),
               curve: Curves.easeIn,
               child: Container(
+                margin: EdgeInsets.only(
+                  left: 10,
+                  right: 10,
+                  bottom: 10,
+                ),
                 height: searchSheetHeight,
                 decoration: BoxDecoration(
                   color: BrandColors.colorDarkBlue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
+                  borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black26,
@@ -800,93 +977,183 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(
                         height: 22,
                       ),
-                      Container(
-                        padding: EdgeInsets.all(5),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: BrandColors.colorVeryLightPurple,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.home_outlined,
-                              color: Color(0xFF40C1C9),
-                            ),
-                            SizedBox(
-                              width: 12,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Add Home',
-                                  style: TextStyle(
-                                    color: Color(0xFF40C1C9),
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(25),
+                                    color: BrandColors.colorlightPurple,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: BrandColors.colorlightPurple,
+                                        blurRadius: 15,
+                                        spreadRadius: 0.5,
+                                        offset: Offset(0.7, 0.7),
+                                      ),
+                                    ],
+                                  ),
+                                  margin: EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.home_outlined,
+                                        color: Color(0xFF40C1C9),
+                                        size: 30,
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Text(
+                                        'Home Address',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'Brand-Rgular',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(
-                                  height: 3,
-                                ),
-                                Text(
-                                  'Your residential address',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: BrandColors.colorDimText,
+                              ),
+                              Expanded(
+                                child: Container(
+                                  margin: EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(25),
+                                    color: BrandColors.colorlightPurple,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: BrandColors.colorlightPurple,
+                                        blurRadius: 15,
+                                        spreadRadius: 0.5,
+                                        offset: Offset(0.7, 0.7),
+                                      ),
+                                    ],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.work_outline,
+                                        color: Color(0xFF40C1C9),
+                                        size: 30,
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Text(
+                                        'Work Address',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'Brand-Rgular',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      BrandDivider(),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Container(
-                        padding: EdgeInsets.all(5),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: BrandColors.colorVeryLightPurple,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.work_outline,
-                              color: Color(0xFF40C1C9),
-                            ),
-                            SizedBox(
-                              width: 12,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Add Work',
-                                  style: TextStyle(
-                                    color: Color(0xFF40C1C9),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 3,
-                                ),
-                                Text(
-                                  'Your office address',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: BrandColors.colorDimText,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Container(
+                      //   padding: EdgeInsets.all(5),
+                      //   width: double.infinity,
+                      //   decoration: BoxDecoration(
+                      //     color: BrandColors.colorVeryLightPurple,
+                      //     borderRadius: BorderRadius.circular(5),
+                      //   ),
+                      //   child: Row(
+                      //     children: [
+                      //       Icon(
+                      //         Icons.home_outlined,
+                      //         color: Color(0xFF40C1C9),
+                      //       ),
+                      //       SizedBox(
+                      //         width: 12,
+                      //       ),
+                      //       Column(
+                      //         crossAxisAlignment: CrossAxisAlignment.start,
+                      //         children: [
+                      //           Text(
+                      //             'Add Home',
+                      //             style: TextStyle(
+                      //               color: Color(0xFF40C1C9),
+                      //             ),
+                      //           ),
+                      //           SizedBox(
+                      //             height: 3,
+                      //           ),
+                      //           Text(
+                      //             'Your residential address',
+                      //             style: TextStyle(
+                      //               fontSize: 11,
+                      //               color: BrandColors.colorDimText,
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
+                      // SizedBox(
+                      //   height: 10,
+                      // ),
+                      // BrandDivider(),
+                      // SizedBox(
+                      //   height: 10,
+                      // ),
+                      // Container(
+                      //   padding: EdgeInsets.all(5),
+                      //   width: double.infinity,
+                      //   decoration: BoxDecoration(
+                      //     color: BrandColors.colorVeryLightPurple,
+                      //     borderRadius: BorderRadius.circular(5),
+                      //   ),
+                      //   child: Row(
+                      //     children: [
+                      //       Icon(
+                      //         Icons.work_outline,
+                      //         color: Color(0xFF40C1C9),
+                      //       ),
+                      //       SizedBox(
+                      //         width: 12,
+                      //       ),
+                      //       Column(
+                      //         crossAxisAlignment: CrossAxisAlignment.start,
+                      //         children: [
+                      //           Text(
+                      //             'Add Work',
+                      //             style: TextStyle(
+                      //               color: Color(0xFF40C1C9),
+                      //             ),
+                      //           ),
+                      //           SizedBox(
+                      //             height: 3,
+                      //           ),
+                      //           Text(
+                      //             'Your office address',
+                      //             style: TextStyle(
+                      //               fontSize: 11,
+                      //               color: BrandColors.colorDimText,
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
@@ -905,13 +1172,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               ),
               curve: Curves.easeIn,
               child: Container(
+                margin: EdgeInsets.only(
+                  left: 10,
+                  right: 10,
+                  bottom: 10,
+                ),
                 height: rideDetailsHeight,
                 decoration: BoxDecoration(
                   color: BrandColors.colorDarkBlue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    topRight: Radius.circular(15),
-                  ),
+                  borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black26,
@@ -1079,19 +1348,24 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               ),
               curve: Curves.easeIn,
               child: Container(
+                margin: EdgeInsets.only(
+                  left: 10,
+                  right: 10,
+                  bottom: 10,
+                ),
                 height: requestSheetHeight,
                 decoration: BoxDecoration(
                   color: BrandColors.colorDarkBlue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    topRight: Radius.circular(15),
-                  ),
+                  borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 15,
                       spreadRadius: 0.5,
-                      offset: Offset(0.7, 0.7),
+                      offset: Offset(
+                        0.7,
+                        0.7,
+                      ),
                     ),
                   ],
                 ),
@@ -1173,13 +1447,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               ),
               curve: Curves.easeIn,
               child: Container(
+                margin: EdgeInsets.only(
+                  left: 10,
+                  right: 10,
+                  bottom: 10,
+                ),
                 height: tripInfoSheetHeight,
                 decoration: BoxDecoration(
                   color: BrandColors.colorDarkBlue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    topRight: Radius.circular(15),
-                  ),
+                  borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black26,
@@ -1362,158 +1638,5 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         ],
       ),
     );
-  }
-
-  Future<void> getDirection() async {
-    var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
-    var destination = Provider.of<AppData>(context, listen: false).destAddress;
-
-    var pickLatLng = LatLng(pickup.latitude, pickup.longitude);
-    var destLatLng = LatLng(destination.latitude, destination.longitude);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => ProgressDialog(
-        status: 'Please wait...',
-      ),
-    );
-
-    var thisDetails =
-        await HelperMethods.getDirectionDetails(pickLatLng, destLatLng);
-    setState(() {
-      tripDirectionDetails = thisDetails;
-    });
-
-    Navigator.pop(context);
-
-    PolylinePoints polylinePoints = PolylinePoints();
-    List<PointLatLng> results =
-        polylinePoints.decodePolyline(thisDetails.encodedPoints);
-
-    polyLineCoordinates.clear();
-
-    if (results.isNotEmpty) {
-      // loop through all pointLatLng points and convert them
-      // to a list of LatLng, required by the Polyline
-
-      results.forEach((PointLatLng points) {
-        polyLineCoordinates.add(LatLng(points.latitude, points.longitude));
-      });
-
-      _polylines.clear();
-
-      setState(() {
-        Polyline polyline = Polyline(
-          polylineId: PolylineId('polyId'),
-          color: Color.fromARGB(255, 95, 109, 237),
-          points: polyLineCoordinates,
-          jointType: JointType.round,
-          width: 4,
-          startCap: Cap.roundCap,
-          endCap: Cap.roundCap,
-          geodesic: true,
-        );
-
-        _polylines.add(polyline);
-      });
-
-      LatLngBounds bounds;
-
-      if (pickLatLng.latitude > destLatLng.latitude &&
-          pickLatLng.longitude > destLatLng.longitude) {
-        bounds = LatLngBounds(
-          southwest: destLatLng,
-          northeast: pickLatLng,
-        );
-      } else if (pickLatLng.longitude > destLatLng.longitude) {
-        bounds = LatLngBounds(
-          southwest: LatLng(pickLatLng.latitude, destLatLng.longitude),
-          northeast: LatLng(destLatLng.latitude, pickLatLng.longitude),
-        );
-      } else if (pickLatLng.latitude > destLatLng.latitude) {
-        bounds = LatLngBounds(
-          southwest: LatLng(destLatLng.latitude, pickLatLng.longitude),
-          northeast: LatLng(pickLatLng.latitude, destLatLng.longitude),
-        );
-      } else {
-        bounds = LatLngBounds(
-          southwest: pickLatLng,
-          northeast: destLatLng,
-        );
-      }
-
-      mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 70));
-
-      Marker pickupMarker = Marker(
-        markerId: MarkerId('pickUp'),
-        position: pickLatLng,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: InfoWindow(
-          title: pickup.placeName,
-          snippet: 'My Location',
-        ),
-      );
-
-      Marker destinationMarker = Marker(
-        markerId: MarkerId('destination'),
-        position: destLatLng,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        infoWindow: InfoWindow(
-          title: destination.placeName,
-          snippet: 'Destination Location',
-        ),
-      );
-
-      setState(() {
-        _markers.add(pickupMarker);
-        _markers.add(destinationMarker);
-      });
-
-      Circle pickupCircle = Circle(
-        circleId: CircleId('pickup'),
-        strokeColor: Colors.green,
-        strokeWidth: 3,
-        radius: 12,
-        center: pickLatLng,
-        fillColor: BrandColors.colorGreen,
-      );
-
-      Circle destinationCircle = Circle(
-        circleId: CircleId('destination'),
-        strokeColor: BrandColors.colorAccentPurple,
-        strokeWidth: 3,
-        radius: 12,
-        center: destLatLng,
-        fillColor: BrandColors.colorAccentPurple,
-      );
-
-      setState(() {
-        _circles.add(pickupCircle);
-        _circles.add(destinationCircle);
-      });
-    }
-  }
-
-  void resetApp() {
-    setState(() {
-      polyLineCoordinates.clear();
-      _polylines.clear();
-      _markers.clear();
-      _circles.clear();
-      rideDetailsHeight = 0;
-      requestSheetHeight = 0;
-      searchSheetHeight = 295;
-      mapBottomPadding = 295;
-      drawerCanOpen = true;
-      statusOfRide = '';
-      driverName = '';
-      driverPhone = '';
-      carModel = '';
-      carColor = '';
-      tripStatusDisplay = 'Driver is Arriving';
-    });
-
-    setupPositionLocator();
   }
 }
